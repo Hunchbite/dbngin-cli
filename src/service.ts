@@ -1,11 +1,10 @@
 import { randomUUID } from "node:crypto";
 import { existsSync, readFileSync, renameSync, rmSync, writeFileSync } from "node:fs";
-import { homedir } from "node:os";
 import { join, resolve, sep } from "node:path";
 import { binariesDir, install, installedVersions } from "./binaries";
 import { type Engine, ENGINES, engineFor, isDir, plistPath } from "./engines";
 import * as launchd from "./launchd";
-import { enginesDir } from "./paths";
+import { enginesDir, trashDir } from "./paths";
 import { freePort, portOwner } from "./ports";
 import { type Service, type WriteOptions, findService, loadServices, updateServices } from "./registry";
 import { CliError, normalizeName, pidAlive, waitFor } from "./util";
@@ -218,7 +217,7 @@ export async function remove(s: Service, opts: RemoveOptions = {}): Promise<{ tr
     rmSync(dir, { recursive: true, force: true });
     return {};
   }
-  const trashed = join(homedir(), ".Trash", `DBngin ${s.Name.replace(/[/:]/g, "-")} ${s.ID.slice(0, 8)} ${Date.now()}`);
+  const trashed = join(trashDir(), `DBngin ${s.Name.replace(/[/:]/g, "-")} ${s.ID.slice(0, 8)} ${Date.now()}`);
   renameSync(dir, trashed);
   return { trashedTo: trashed };
 }

@@ -39,6 +39,31 @@ bun install && bun run build      # → dist/dbngin
 cp dist/dbngin ~/.local/bin/
 ```
 
+## Use it from an AI coding agent
+
+The repo includes an [agent skill](skills/dbngin/SKILL.md) that teaches Claude Code (and other agents that read skills) when and how to use `dbngin`: finding or creating a project's database, wiring up `DATABASE_URL` without overwriting a remote one, working around port clashes, and asking before anything that loses data. Install the CLI first, then the skill:
+
+```sh
+# any agent that supports skills (Claude Code, Codex, Cursor, …) via skills.sh
+npx skills add Hunchbite/dbngin-cli -g
+
+# or as a Claude Code plugin
+/plugin marketplace add Hunchbite/dbngin-cli
+/plugin install dbngin@dbngin-cli
+
+# or by hand
+git clone https://github.com/Hunchbite/dbngin-cli ~/src/dbngin-cli
+ln -s ~/src/dbngin-cli/skills/dbngin ~/.claude/skills/dbngin
+```
+
+Then just ask for what you need. The agent picks the skill up on its own:
+
+> Set up a local Postgres for this project and put the connection string in .env.
+>
+> My local Postgres won't start, can you fix it?
+>
+> Make a fresh copy of the shop database so I can test the migration on it.
+
 ## Commands
 
 | Command | What it does |
@@ -79,7 +104,7 @@ Everything DBngin does maps to plain files and `launchd`:
 |---|---|
 | Service list | `~/Library/Application Support/com.tinyapp.DBngin/Data/DBEngines.plist`: one entry per service (ID, name, type, version, port, data path, auto-start) |
 | Service data | `…/com.tinyapp.DBngin/Engines/<engine>/<ID>/`: the database files, plus the service's launchd plist `com.tinyapp.DBngin.<engine>-<ID>.plist` |
-| Engine binaries | `/Users/Shared/DBngin/<engine>/<version>/bin` (PostgreSQL builds include PostGIS) |
+| Engine binaries | `/Users/Shared/DBngin/<engine>/<version>/bin` (PostgreSQL builds include PostGIS). The builds have this path baked in and only run from there |
 | Version catalog | `https://dbngin.com/osx/engines`; archives come from `files.dbngin.com/binaries/…` |
 | Running | Each service is a per-user launchd agent: `launchctl bootstrap gui/$UID <plist>` starts it, `launchctl bootout` stops it |
 | PostgreSQL | `initdb -U postgres -A trust --encoding=UTF-8 --locale=en_US.UTF-8`: superuser `postgres`, no password from this Mac |
@@ -90,12 +115,19 @@ Everything DBngin does maps to plain files and `launchd`:
 
 ```sh
 bun install
-bun test                          # unit tests
-DBNGIN_E2E=1 bun test             # + end-to-end: real servers via launchd, in a throwaway folder
+bun test                          # unit + CLI tests: no DBngin needed, ~4 s
+DBNGIN_E2E=1 bun test             # + end-to-end with real servers, ~70 s
 bun run typecheck
 ```
 
-The end-to-end tests use the engine binaries DBngin has installed but a temporary service list and data folder (`DBNGIN_HOME`), so they never touch your real services.
+| File | Covers |
+|---|---|
+| `test/unit.test.ts` | Service lookup, version sorting, plist generation and escaping, atomic list writes with backup |
+| `test/cli.test.ts` | Every command's argument errors and exit codes; empty and corrupt service lists; ambiguous names; unsupported engines; missing data or binaries; stale pid files; `doctor` findings; `rm` confirmation, Trash and path safety; the open-app guard and `--restart-app` |
+| `test/e2e.test.ts` | Real PostgreSQL and Redis through launchd: full lifecycle, defaults, restart and port moves, two services on one port, stopping with clients connected, dropping a database in use, logs, start timeouts and crash loops, launchd restarting a crashed server, servers started with `pg_ctl`, ports held by other programs, `rm` of a running service, downloads and the app's bundled archives |
+| `test/parity.test.ts` | Your installed DBngin's own files still match what this tool writes, to catch format changes in a DBngin update. Read-only; skipped when DBngin has no services |
+
+Every test runs in a throwaway folder (`DBNGIN_HOME`, `DBNGIN_TRASH`) and never touches your real services. One exception is deliberate: DBngin's engine builds only run from `/Users/Shared/DBngin`, so the download test installs a Redis version there, as the app would, and removes it afterwards.
 
 ## License
 

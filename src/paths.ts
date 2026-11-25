@@ -22,3 +22,9 @@ export const enginesDir = () => join(appSupportDir(), "Engines");
 export const appBundle = () => process.env.DBNGIN_APP ?? "/Applications/DBngin.app";
 
 export const catalogUrl = () => process.env.DBNGIN_CATALOG_URL ?? "https://dbngin.com/osx/engines";
+
+/** Process name of the DBngin app (tests point this at a stand-in process). */
+export const appProcess = () => process.env.DBNGIN_APP_PROCESS ?? "DBngin";
+
+/** Where `rm` moves data folders. */
+export const trashDir = () => process.env.DBNGIN_TRASH ?? join(homedir(), ".Trash");

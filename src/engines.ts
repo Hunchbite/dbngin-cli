@@ -82,7 +82,7 @@ const postgres: Engine = {
     // A stale pid file can point at an unrelated process that reused the PID.
     return processCommand(pid)?.includes(s.DBPath) ? pid : null;
   },
-  ready: (s) => run([bin(s, "pg_isready"), "-q", "-h", "127.0.0.1", "-p", s.Port]).code === 0,
+  ready: (s) => run([bin(s, "pg_isready"), "-q", "-h", "127.0.0.1", "-p", s.Port, "-U", "postgres"]).code === 0,
   init(s) {
     // Same settings the app uses: superuser "postgres", no password from this Mac.
     must([bin(s, "initdb"), "-D", s.DBPath, "-U", "postgres", "-A", "trust", "--encoding=UTF-8", "--locale=en_US.UTF-8"]);

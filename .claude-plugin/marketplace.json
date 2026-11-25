@@ -1,0 +1,17 @@
+{
+  "name": "dbngin-cli",
+  "owner": { "name": "Hunchbite" },
+  "metadata": {
+    "description": "Agent skill for running local PostgreSQL and Redis through DBngin with the dbngin CLI",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "dbngin",
+      "description": "Lets Claude create, start, stop and connect to local DBngin databases with the dbngin CLI.",
+      "source": "./",
+      "strict": false,
+      "skills": ["./skills/dbngin"]
+    }
+  ]
+}

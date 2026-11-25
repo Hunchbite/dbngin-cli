@@ -1,6 +1,6 @@
 import { copyFileSync, existsSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
-import { appBundle, registryBackupPath, registryPath } from "./paths";
+import { appBundle, appProcess, registryBackupPath, registryPath } from "./paths";
 import { readPlist, writePlist } from "./plist";
 import { CliError, normalizeName, run, sleep, waitFor } from "./util";
 
@@ -41,12 +41,13 @@ function saveServices(services: Service[]): void {
 
 export function appRunning(): boolean {
   if (process.env.DBNGIN_IGNORE_APP === "1") return false;
-  return run(["pgrep", "-x", "DBngin"]).code === 0;
+  return run(["pgrep", "-x", appProcess()]).code === 0;
 }
 
 export async function quitApp(): Promise<void> {
   if (!appRunning()) return;
-  run(["osascript", "-e", 'quit app "DBngin"']);
+  if (appProcess() === "DBngin") run(["osascript", "-e", 'tell application id "com.tinyapp.DBngin" to quit']);
+  else run(["pkill", "-TERM", "-x", appProcess()]); // test stand-in for the app
   const gone = await waitFor(() => !appRunning(), 15_000);
   if (!gone) throw new CliError("the DBngin app did not quit", "Quit it from its menu bar icon and try again.");
   await sleep(300);
@@ -82,7 +83,14 @@ export async function updateServices<T>(change: (services: Service[]) => T, opts
     saveServices(services);
     return result;
   } finally {
-    if (wasRunning) openApp();
+    if (wasRunning) {
+      // The change is already saved; failing to reopen the app shouldn't hide that.
+      try {
+        openApp();
+      } catch (e) {
+        console.error(`warning: could not reopen the DBngin app: ${(e as Error).message}`);
+      }
+    }
   }
 }
 
