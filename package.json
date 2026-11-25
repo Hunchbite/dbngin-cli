@@ -1,0 +1,25 @@
+{
+  "name": "dbngin-cli",
+  "version": "0.1.0",
+  "description": "Unofficial command-line tool for DBngin: list, start, stop, create and remove database services, and manage PostgreSQL databases",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "dbngin": "./src/cli.ts"
+  },
+  "files": ["src", "README.md", "LICENSE"],
+  "scripts": {
+    "dbngin": "bun run src/cli.ts",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit",
+    "build": "bun build src/cli.ts --compile --minify --outfile dist/dbngin"
+  },
+  "os": ["darwin"],
+  "engines": { "bun": ">=1.1" },
+  "repository": { "type": "git", "url": "git+https://github.com/Hunchbite/dbngin-cli.git" },
+  "keywords": ["dbngin", "postgresql", "redis", "cli", "macos", "launchd", "local-development"],
+  "devDependencies": {
+    "@types/bun": "^1.2.0",
+    "typescript": "^5.8.0"
+  }
+}
