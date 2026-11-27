@@ -64,7 +64,9 @@ export async function start(s: Service, timeoutMs = 30_000): Promise<StartResult
     const who = other ? `the DBngin service "${other.Name}"` : `${owner.command}${owner.pid ? ` (pid ${owner.pid})` : ""}`;
     throw new CliError(
       `port ${s.Port} is already in use by ${who}`,
-      `Stop that first, or give this service its own port: \`dbngin set ${quote(s.Name)} --port <port>\`.`,
+      other
+        ? `Stop "${other.Name}" first, or give this service its own port: \`dbngin set ${quote(s.Name)} --port <port>\`.`
+        : `Give this service its own port: \`dbngin set ${quote(s.Name)} --port <port>\` (or free the port, if that program isn't needed).`,
     );
   }
 
